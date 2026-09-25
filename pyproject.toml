@@ -1,0 +1,35 @@
+[project]
+name = "dubizzle-car-assistant"
+version = "0.1.0"
+description = "AI assistant prototype for exploring a dubizzle used-car inventory"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",        # backend framework (required by the brief)
+    "uvicorn[standard]>=0.32", # ASGI server to run FastAPI
+    "litellm>=1.50",          # unified LLM client -> Gemini, with built-in retry/fallback
+    "chromadb>=0.5",          # embedded vector store for the RAG half of hybrid search
+    "pandas>=2.2",            # structured half of hybrid search + dataset cleaning
+    "openpyxl>=3.1",          # read the provided .xlsx dataset
+    "python-dotenv>=1.0",     # load GEMINI_API_KEY from .env, never hardcoded
+    "pydantic>=2.9",          # request/response schemas -> the API contract
+    "httpx>=0.27",            # async-friendly HTTP client (also used by the Streamlit client)
+    "streamlit>=1.64.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+]
+client = [
+    "streamlit>=1.39",        # kept as an optional group: the client is a separate concern
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
