@@ -138,7 +138,7 @@ silently dropping or inventing figures for those listings.
 
 ## Screenshots
 
-_Add two screenshots here before submitting:_
+
 1. A multi-turn conversation showing short-term memory 
 ![alt text](screenshots/image-1.png)  
 ![alt text](screenshots/image-2.png)
