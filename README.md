@@ -4,7 +4,8 @@ An AI assistant for exploring a used-car inventory: search cars, book a
 simulated test drive, get qualified as a lead, and have the assistant
 remember you both within a conversation and across visits.
 
-Built for the dubizzle ML Intern Take-Home Assessment 2026.
+
+<!--Built for the dubizzle ML Intern Take-Home Assessment 2026 -->
 
 ## Architecture
 
