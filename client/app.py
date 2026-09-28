@@ -80,6 +80,10 @@ if prompt := st.chat_input("Ask about a car, book a test drive…"):
                 reply = f"The backend returned an error ({exc.response.status_code}). Please try again."
             except httpx.TimeoutException:
                 reply = "That took too long to respond - please try again."
+        # print(f"ABOUT TO RENDER: {reply!r}", flush=True)
+
+        if not reply.strip():
+            reply = "I didn't get a response - please try again. (why is this happening tho?)"
         st.markdown(reply)
 
     st.session_state.messages.append({"role": "assistant", "content": reply})

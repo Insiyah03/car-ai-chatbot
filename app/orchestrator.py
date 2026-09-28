@@ -18,6 +18,9 @@ from app.tools.booking import BOOK_VIEWING_SCHEMA, book_viewing
 from app.tools.leads import CAPTURE_LEAD_SCHEMA, capture_lead
 from app.tools.search import SEARCH_INVENTORY_SCHEMA, search_inventory
 
+import logging 
+logger = logging.getLogger(__name__)
+
 TOOLS = [SEARCH_INVENTORY_SCHEMA, BOOK_VIEWING_SCHEMA, CAPTURE_LEAD_SCHEMA]
 
 SYSTEM_PROMPT = """You are the dubizzle car assistant: a helpful shopping assistant for one dealership's used-car inventory.
@@ -29,7 +32,8 @@ Scope and rules:
 - Call capture_lead once a user has shared genuine buying intent (a budget and/or specific needs) - not on every message.
 - Politely decline anything unrelated to this inventory (coding help, homework, general trivia, etc.) and redirect back to cars. Keep declines brief and friendly, not preachy.
 - Never mention, compare to, or recommend any other car marketplace or platform. If asked about a competitor, say you can only help with what's available here.
-- Be warm, concise, and helpful."""
+- Be warm, concise, and helpful.
+- Do not use remembered preferences to initiate a search when the user's current message is only a greeting or casual conversation. Only search inventory when the current user message indicates a car-shopping request or asks about a vehicle."""
 
 # Defense-in-depth on top of the system prompt instruction above (Stage 6
 # decision): a cheap keyword check on the model's own output, in case it
@@ -143,12 +147,37 @@ def handle_message(
                 "tool_call_id": call.id,
                 "content": json.dumps(result, default=str),
             })
+        # print("\n=== MESSAGES SENT TO FINAL LLM ===")
+        # print(json.dumps(messages, indent=2, default=str))
+        # print("=================================\n")
         try:
             response = chat_completion(messages, tools=TOOLS)
         except LLMError:
             return _FALLBACK_SUMMARY_FAILED
         message = response.choices[0].message
 
-    reply = _guardrail_check(message.content or "")
+    ## --- old code
+    # reply = _guardrail_check(message.content or "")
+    # sessions.append_message(settings.db_path, session_id, "assistant", reply)
+    # return reply
+    ## --- old code
+
+    # --- new: guard against empty completions ---
+    if not (message.content or "").strip():
+        logger.warning(
+            "Empty LLM reply (finish_reason=%s, tool_round=%s)",
+            response.choices[0].finish_reason, bool(tool_calls),
+        )
+        try:
+            response = chat_completion(messages, tools=TOOLS)  # one retry
+            message = response.choices[0].message
+        except LLMError:
+            return _FALLBACK_SUMMARY_FAILED
+
+    reply = message.content or ""
+    if not reply.strip():
+        return _FALLBACK_SUMMARY_FAILED  # never persist an empty assistant turn
+
+    reply = _guardrail_check(reply)
     sessions.append_message(settings.db_path, session_id, "assistant", reply)
     return reply
